@@ -45,7 +45,10 @@ const translations = {
         "spec-urology": "Урология",
         "room": "Кабинет",
         "tab-results": "Результаты анализов",
-        "result-biochem": "Биохимический анализ крови"
+        "result-biochem": "Биохимический анализ крови",
+        "error-name": "Введите ФИО (минимум 2 символа)",
+        "error-email": "Введите корректный email (с символом @)",
+        "error-pass": "Пароль: мин. 6 символов и 1 спецсимвол"
     },
     en: {
         "nav-find": "Find a Doctor",
@@ -93,7 +96,10 @@ const translations = {
         "spec-urology": "Urology",
         "room": "Room",
         "tab-results": "Test Results",
-        "result-biochem": "Biochemical blood test"
+        "result-biochem": "Biochemical blood test",
+        "error-name": "Please enter your name (min 2 chars)",
+        "error-email": "Enter a valid email (with @)",
+        "error-pass": "Password: min 6 chars and 1 special char"
     }
 };
 
@@ -335,16 +341,31 @@ const showAuthModal = () => {
 window.showAuthModal = showAuthModal;
 
 const registerOrLogin = () => {
-    const name = document.getElementById('auth-name').value;
-    const email = document.getElementById('auth-email').value;
+    const name = document.getElementById('auth-name').value.trim();
+    const email = document.getElementById('auth-email').value.trim();
     const pass = document.getElementById('auth-pass').value;
 
-    if (!email || !pass) {
-        showNotification('validation-error', true);
+    // 1. Проверка имени (минимум 2 символа)
+    if (name.length < 2) {
+        showNotification('error-name', true);
         return;
     }
 
-    currentUser = { name: name || 'Пациент', email: email };
+    // 2. Проверка Email (должен быть формат текста, символ @, и домен)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showNotification('error-email', true);
+        return;
+    }
+
+    // 3. Проверка пароля (минимум 6 символов, минимум 1 спецсимвол)
+    const passRegex = /[!@#$%^&*(),.?":{}|<>]/;
+    if (pass.length < 6 || !passRegex.test(pass)) {
+        showNotification('error-pass', true);
+        return;
+    }
+
+    currentUser = { name: name, email: email };
     localStorage.setItem('clinicUser', JSON.stringify(currentUser));
     
     isAuthenticated = true;
