@@ -3,190 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinic App</title>
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/style222.css">
-</head>
-<body class="bg-background text-foreground">
-    <header class="border-b border-border p-4 flex justify-between items-center">
-        <div class="logo font-weight-medium text-2xl cursor-pointer" onclick="showSection('home')" aria-label="Clinic App Logo">CLINIC APP</div>        
+    <title>Clinic App | Neobrutalism</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #000000;
+            --border-width: 3px;
+            --shadow: 6px 6px 0px #000000;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--fg); padding: 20px; }
         
-        <nav class="flex gap-4">
-            <button data-i18n="nav-find" aria-label="Find a Doctor" class="text-base font-weight-medium">Найти врача</button>
-            <button data-i18n="nav-appointments" aria-label="My Appointments" class="text-base font-weight-medium">Мои записи</button>
-            <button data-i18n="nav-portal" aria-label="Doctor Portal" class="text-base font-weight-medium">Портал врача</button>
-        </nav>
+        header { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; border: var(--border-width) solid var(--fg);
+            box-shadow: var(--shadow); margin-bottom: 40px; background: #fff;
+        }
+        .logo { font-weight: 900; font-size: 1.5rem; text-transform: uppercase; cursor: pointer; }
+        
+        button, input {
+            padding: 12px 20px; border: var(--border-width) solid var(--fg);
+            background: #fff; font-weight: 700; cursor: pointer;
+            box-shadow: 3px 3px 0px #000; transition: 0.1s;
+        }
+        button:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0px #000; }
+        button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0px #000; }
+        
+        .search-container { display: flex; gap: 30px; align-items: flex-start; margin-top: 20px; }
+        .spec-column { width: 250px; display: flex; flex-direction: column; gap: 10px; }
+        .docs-column { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        
+        .card { border: var(--border-width) solid var(--fg); padding: 20px; box-shadow: var(--shadow); background: #fff; }
+        .modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.9); z-index: 100; justify-content: center; align-items: center; 
+        }
+        .notification { 
+            display: none; position: fixed; top: 20px; right: 20px; padding: 20px; 
+            border: var(--border-width) solid var(--fg); background: #fff; font-weight: 900; z-index: 1000; 
+        }
+        .active-spec { background: #000 !important; color: #fff !important; }
 
-        <div class="flex items-center gap-4">
-            <div class="language-switcher flex gap-2 border-r border-border pr-4">
-                <button onclick="changeLanguage('ru')" class="font-weight-medium hover:text-primary" aria-label="Переключить на русский">RU</button>
-                <span class="text-muted-foreground">|</span>
-                <button onclick="changeLanguage('en')" class="font-weight-medium hover:text-primary" aria-label="Switch to English">EN</button>
-            </div>
-            
-            <div class="profile-selector">
-                <select id="family-profile" class="bg-input-background text-foreground radius-sm p-2" aria-label="Смена профиля">
-                    <option value="anna" data-i18n="profile-anna">Анна (Вы)</option>
-                    <option value="maxim" data-i18n="profile-maxim">Максим (Сын)</option>
-                </select>
-            </div>
+        section { display: none; }
+        #home { display: block; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: var(--border-width) solid var(--fg); padding: 15px; text-align: center; }
+        th { background: #eee; }
+    </style>
+</head>
+<body>
+    <div id="notify" class="notification">УСПЕШНО!</div>
+
+    <header>
+        <div class="logo" onclick="showSection('home')">CLINIC APP</div>
+        <nav style="display: flex; gap: 20px;">
+            <button onclick="showSection('search')" data-i18n="nav-find">Найти врача</button>
+            <button onclick="showSection('dashboard')" data-i18n="nav-appointments">Мои записи</button>
+            <button onclick="showSection('doctorportal')" data-i18n="nav-portal">Портал врача</button>
+        </nav>
+        <div class="lang-sw" style="display: flex; gap: 10px;">
+            <button onclick="changeLanguage('ru')">RU</button>
+            <button onclick="changeLanguage('en')">EN</button>
+            <button id="auth-btn" onclick="showAuthModal()">ВОЙТИ</button>
         </div>
     </header>
 
-    <main class="p-8">
-        <div id="js-notification-container" aria-live="polite" class="radius-md p-4 mb-4" style="display: none;"></div>
-
-        <section id="home">
-            <h1 class="text-2xl font-weight-medium text-center mb-4" data-i18n="home-title">ПРОСТАЯ МЕДИЦИНСКАЯ ПОМОЩЬ</h1>
-            <p class="text-center text-muted-foreground mb-8" data-i18n="home-subtitle">Записывайтесь к лучшим специалистам легко, доступно и быстро.</p>
-            
-            <div class="search-container flex justify-center mb-8">
-                <input type="text" id="main-search" class="bg-input-background border border-border radius-md p-3 w-1/2" data-i18n-placeholder="search-placeholder" placeholder="Поиск по специализации или имени...">
-                <button class="bg-primary text-primary-foreground font-weight-medium radius-md p-3 ml-2" data-i18n="search-btn">ПОИСК</button>
-            </div>
-
-            <div class="quick-actions flex justify-center gap-6">
-                <button class="card border border-border radius-lg p-6 bg-card text-card-foreground w-64 hover:translate-y-[-2px] transition-all" onclick="showSection('dashboard')">
-                    <span class="text-lg font-weight-medium" data-i18n="nav-appointments">Мои записи</span>
-                </button>
-                <button class="card border border-border radius-lg p-6 bg-card text-card-foreground w-64 hover:translate-y-[-2px] transition-all" onclick="showAuthModal()">
-                    <span class="text-lg font-weight-medium" data-i18n="new-patient">Новый пациент?</span>
-                </button>
-            </div>
+    <main>
+        <section id="home" style="text-align: center;">
+            <h1 style="font-size: 3.5rem; margin-bottom: 20px;" data-i18n="home-title">ПРОСТАЯ ПОМОЩЬ</h1>
+            <button onclick="showSection('search')" style="font-size: 1.5rem; padding: 20px 40px;" data-i18n="search-btn">Начать поиск</button>
         </section>
 
-        <section id="search" style="display: none;" class="flex gap-8">
-            <aside class="w-1/4 border border-border radius-lg p-4">
-                <h3 class="text-lg font-weight-medium mb-4" data-i18n="filter-title">ФИЛЬТРЫ</h3>
-                <nav class="flex flex-col gap-2">
-                    <button class="bg-primary text-primary-foreground radius-sm p-2 text-left" data-i18n="filter-all">Все</button>
-                    <button class="text-foreground radius-sm p-2 text-left hover:bg-muted" data-i18n="spec-cardiology">Кардиология</button>
-                    <button class="text-foreground radius-sm p-2 text-left hover:bg-muted" data-i18n="spec-pediatrics">Педиатрия</button>
-                </nav>
-            </aside>
-            <div class="w-3/4 flex flex-col gap-4">
-                <article class="doctor-card border border-border radius-lg p-4 flex justify-between bg-card text-card-foreground">
-                    <div>
-                        <h3 class="text-lg font-weight-medium">Dr. Eleanor Rigby</h3>
-                        <p class="text-muted-foreground" data-i18n="spec-cardiology">Кардиология</p>
-                        <p class="text-muted-foreground text-sm" data-i18n="doctor-room">Кабинет 304, Корпус А</p>
-                    </div>
-                    <div class="flex flex-col items-end gap-2">
-                        <span class="border border-border radius-sm p-1 text-sm" data-i18n="status-available">ДОСТУПНО СЕГОДНЯ</span>
-                        <button class="bg-secondary text-secondary-foreground font-weight-medium radius-md p-2" data-i18n="btn-schedule">СМОТРЕТЬ ГРАФИК</button>
-                    </div>
-                </article>
-            </div>
-        </section>
-
-        <section id="booking" style="display: none;">
-            <div class="doctor-header mb-6 p-4 border border-border radius-lg">
-                <h2 class="text-xl font-weight-medium">DR. ELEANOR RIGBY</h2>
-                <p class="text-muted-foreground" data-i18n="spec-cardiology">Кардиология</p>
-            </div>
-            <h3 class="text-lg font-weight-medium mb-4" data-i18n="slots-title">СВОБОДНОЕ ВРЕМЯ</h3>
-            <div class="slots-grid grid grid-cols-4 gap-4 mb-6">
-                <button class="slot border border-border radius-md p-4 text-center hover:bg-primary hover:text-primary-foreground">09:00</button>
-                <button class="slot bg-muted text-muted-foreground border border-border radius-md p-4 text-center cursor-not-allowed" disabled data-i18n="slot-booked">Занято</button>
-            </div>
-            <button class="bg-secondary text-secondary-foreground border border-border radius-lg p-3 w-full font-weight-medium" data-i18n="btn-notify">Уведомить меня (Лист ожидания)</button>
-        </section>
-
-        <section id="confirm" style="display: none;">
-            <h2 class="text-xl font-weight-medium text-center mb-8" data-i18n="confirm-title">ПОДТВЕРЖДЕНИЕ ЗАПИСИ</h2>
-            <div class="flex gap-8 justify-center">
-                <div class="appointment-details border border-border radius-lg p-6 w-1/3 bg-card text-card-foreground shadow-brutal">
-                    <h3 class="text-lg font-weight-medium border-b border-border pb-2 mb-4" data-i18n="details-title">ДЕТАЛИ ПРИЕМА</h3>
-                    <p class="mb-2"><span class="text-muted-foreground text-sm" data-i18n="label-doctor">ВРАЧ</span><br><strong id="confirm-doctor" class="font-weight-medium text-lg">Dr. Eleanor Rigby</strong></p>
-                    <p class="mb-2"><span class="text-muted-foreground text-sm" data-i18n="label-time">ВРЕМЯ</span><br><strong id="confirm-time" class="font-weight-medium text-lg">10:00 AM</strong></p>
-                    <p class="mb-2"><span class="text-muted-foreground text-sm">ДАТА</span><br><strong class="font-weight-medium text-lg">Сегодня</strong></p>
+        <section id="search">
+            <div class="search-container">
+                <div class="spec-column" id="spec-list"></div>
+                <div class="docs-column" id="docs-list">
+                    <p style="font-weight: 700;" data-i18n="select-spec-text">Выберите специализацию слева...</p>
                 </div>
-                
-                <form class="booking-form flex flex-col gap-4 w-1/3">
-                    <div class="input-group flex flex-col gap-1">
-                        <label for="full-name" class="font-weight-medium text-base text-muted-foreground" data-i18n="label-name">ФИО</label>
-                        <input type="text" id="full-name" class="bg-input-background border border-border radius-sm p-3 focus-ring">
-                    </div>
-                    <div class="input-group flex flex-col gap-1">
-                        <label for="iin-number" class="font-weight-medium text-base text-muted-foreground">ИИН</label>
-                        <input type="text" id="iin-number" class="bg-input-background border border-border radius-sm p-3 focus-ring" placeholder="12 цифр">
-                    </div>
-                    <div class="input-group flex flex-col gap-1">
-                        <label for="phone-number" class="font-weight-medium text-base text-muted-foreground">Телефон</label>
-                        <input type="tel" id="phone-number" class="bg-input-background border border-border radius-sm p-3 focus-ring" placeholder="+7 (...)">
-                    </div>
-                    <button type="button" class="bg-primary text-primary-foreground font-weight-medium radius-sm p-4 mt-4 w-full" data-i18n="btn-confirm">ПОДТВЕРДИТЬ ЗАПИСЬ</button>
-                </form>
             </div>
         </section>
 
-        <section id="dashboard" style="display: none;">
-            <div class="flex justify-between items-center border-b border-border pb-4 mb-6">
-                <h2 class="text-xl font-weight-medium" data-i18n="nav-appointments">МОИ ЗАПИСИ</h2>
-                <span class="bg-input-background border border-border radius-sm p-2 text-sm">ID: #8842-19B</span>
-            </div>
-            
-            <div class="tabs flex gap-4 mb-6">
-                <button class="font-weight-medium border-b-2 border-primary pb-1 active" data-i18n="tab-upcoming" data-target="upcoming-visits">Предстоящие</button>
-                <button class="font-weight-medium text-muted-foreground border-b-2 border-transparent pb-1" data-i18n="tab-records" data-target="medical-records">Мед. карта</button>
-                <button class="font-weight-medium text-muted-foreground border-b-2 border-transparent pb-1" data-i18n="tab-results" data-target="test-results">Результаты анализов</button>
-            </div>
-
-            <div id="upcoming-visits" class="flex flex-col gap-4"></div>
-
-            <div id="medical-records" style="display: none;">
-                <article class="record-card border border-border radius-lg p-4 flex justify-between items-center bg-card text-card-foreground shadow-brutal mb-4">
-                    <p data-i18n="record-cbc">Общий анализ крови (ОАК)</p>
-                    <a href="#" class="text-primary font-weight-medium underline" data-i18n="btn-download">Скачать PDF</a>
-                </article>
-            </div>
-
-            <div id="test-results" style="display: none;">
-                <article class="record-card border border-border radius-lg p-4 flex justify-between items-center bg-card text-card-foreground shadow-brutal mb-4">
-                    <p data-i18n="result-biochem">Биохимический анализ крови</p>
-                    <span class="text-sm text-muted-foreground">13.03.2026</span>
-                    <a href="#" class="text-primary font-weight-medium underline" data-i18n="btn-download">Скачать PDF</a>
-                </article>
+        <section id="booking">
+            <div class="card">
+                <h2 id="book-doc-name">ИМЯ ВРАЧА</h2>
+                <input type="date" id="book-date" onchange="renderSlots()" style="margin: 20px 0;">
+                <div id="slots-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;"></div>
             </div>
         </section>
 
-        <section id="doctorportal" style="display: none;">
-            <h2 class="text-xl font-weight-medium mb-6" data-i18n="portal-title">УПРАВЛЕНИЕ РАСПИСАНИЕМ</h2>
-            <div class="flex gap-6">
-                <aside class="w-1/4 bg-primary text-primary-foreground p-4 radius-lg">
-                    <h3 data-i18n="summary-title">ИТОГИ ДНЯ</h3>
-                    <p data-i18n="summary-total">Всего пациентов: 12</p>
-                </aside>
-                <div class="w-3/4 border border-border radius-lg p-4">
-                    <table class="w-full text-left">
-                        <thead class="text-muted-foreground border-b border-border">
-                            <tr>
-                                <th class="p-2" data-i18n="col-time">ВРЕМЯ</th>
-                                <th class="p-2" data-i18n="col-patient">ПАЦИЕНТ</th>
-                                <th class="p-2" data-i18n="col-status">СТАТУС</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="border-b border-border">
-                                <td class="p-2">09:00 AM</td>
-                                <td class="p-2">Alice Smith</td>
-                                <td class="p-2"><span class="bg-primary text-primary-foreground px-2 py-1 radius-xl text-xs" data-i18n="status-checkedin">ПРИШЕЛ</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <section id="dashboard">
+            <h2 style="margin-bottom: 20px;" data-i18n="nav-appointments">Мои записи</h2>
+            <div id="dash-content"></div>
+        </section>
+
+        <section id="doctorportal">
+            <div class="card">
+                <h2 data-i18n="nav-portal">Портал врача</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-i18n="col-time">ВРЕМЯ</th>
+                            <th data-i18n="col-patient">ПАЦИЕНТ</th>
+                            <th data-i18n="col-actions">ДЕЙСТВИЯ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portal-tbody"></tbody>
+                </table>
             </div>
         </section>
     </main>
 
-    <footer class="border-t border-border p-6 text-center mt-8 text-sm text-muted-foreground">
-        <p data-i18n="footer-text">© 2026 Муниципальная система медицинских клиник</p>
-        <div class="mt-2 flex justify-center gap-4">
-            <a href="#" class="text-foreground" data-i18n="footer-privacy">Политика конфиденциальности</a>
-            <a href="#" class="text-foreground" data-i18n="footer-accessibility">Доступность</a>
-        </div>
+    <footer style="margin-top: 60px; padding: 20px; border-top: 3px solid #000; text-align: center;">
+        <p>г. Петропавловск, ул. Пушкина, 86 (NKU)</p>
     </footer>
-    <script src="js/script.js"></script>
-</body>
 
+    <div id="auth-modal" class="modal">
+        <div class="card" style="width: 350px;">
+            <h2 style="text-align: center; margin-bottom: 20px;" data-i18n="auth-title">ВХОД</h2>
+            <input type="text" id="auth-name" placeholder="ФИО" style="width: 100%; margin-bottom: 15px;">
+            <input type="email" id="auth-email" placeholder="Email" style="width: 100%; margin-bottom: 15px;">
+            <input type="password" id="auth-pass" placeholder="Пароль" style="width: 100%; margin-bottom: 15px;">
+            <button onclick="login()" style="width: 100%; background: #000; color: #fff;" data-i18n="btn-login">ПРОДОЛЖИТЬ</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
 </html>
